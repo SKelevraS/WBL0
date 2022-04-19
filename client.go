@@ -17,8 +17,8 @@ type MainView struct {
 }
 
 type ResultPost struct {
-	order_uid        string
-	rest_information string
+	order_uid string
+	rest_info string
 }
 
 type OrderData struct {
@@ -34,28 +34,28 @@ func getView() MainView {
 }
 
 func getDB() (db *sql.DB) {
-	userLog := "user=postgres password=1234 dbname=natsDataBase sslmode=disable"
+	userLog := "user=postgres password=1234 dbname=NatsDB sslmode=disable"
 	db, err := sql.Open("postgres", userLog)
 	checkErr(err)
 	return
 }
 
 func loadFromPostgres() map[string]string {
-	userLog := "user=postgres password=1234 dbname=natsDataBase sslmode=disable"
+	userLog := "user=postgres password=1234 dbname=NatsDB sslmode=disable"
 	db, err := sql.Open("postgres", userLog)
 	checkErr(err)
 
-	result, err := db.Query("select * from information_table")
+	result, err := db.Query("select * from info")
 	checkErr(err)
 
 	end := map[string]string{}
 
 	for result.Next() {
 		var e ResultPost
-		err := result.Scan(&e.order_uid, &e.rest_information)
+		err := result.Scan(&e.order_uid, &e.rest_info)
 		checkErr(err)
 
-		end[e.order_uid] = e.rest_information
+		end[e.order_uid] = e.rest_info
 	}
 
 	return end
@@ -67,7 +67,7 @@ func (view MainView) NatsSubscriptionHandler(msg *nats.Msg) { // Получен�
 	checkErr(err)
 	view.DataCache[data.OrderUid] = string(msg.Data)
 
-	_, dbErr := view.dbDriver.Exec("INSERT INTO information_table (order_uid, rest_information) VALUES ($1, $2)", data.OrderUid, string(msg.Data))
+	_, dbErr := view.dbDriver.Exec("INSERT INTO info (order_uid, rest_info) VALUES ($1, $2)", data.OrderUid, string(msg.Data))
 	checkErr(dbErr)
 }
 
